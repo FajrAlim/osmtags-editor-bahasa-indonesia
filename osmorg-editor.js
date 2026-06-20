@@ -168,26 +168,39 @@ function uploadTags() {
         closeEditor();
         return;
     }
-    // Iterate over possible actions and build the changeset comment
-    // For example 'Added smoothness; Changed surface, ref of way 12345'.
-    const possibleActions = [['added', 'to'], ['changed', 'of'], ['removed', 'from']];
+    
+    // Pemetaan aksi dan kata hubung dalam Bahasa Indonesia
+    const possibleActions = [
+        ['added', 'Menambahkan tag', 'pada'],
+        ['changed', 'Mengubah tag', 'dari'],
+        ['removed', 'Menghapus tag', 'dari']
+    ];
+    
     let changesetComment = '';
     let lastPreposition = '';
-    for (const [action, preposition] of possibleActions) {
+    
+    for (const [action, indonesianAction, preposition] of possibleActions) {
         if (modifiedKeys[action].length > 0) {
-            // actionComment might be 'Changed surface, ref'
-            const actionComment = action.charAt(0).toUpperCase() + action.slice(1) + ' ' +
-                modifiedKeys[action].join(', ');
+            const actionComment = indonesianAction + ' ' + modifiedKeys[action].join(', ');
             lastPreposition = preposition;
-            // Append the action comment to the changeset comment
             changesetComment += (changesetComment.length > 0 ? '; ' : '') + actionComment;
         }
     }
+    
     const typeRef = getTypeAndRef();
-    changesetComment += ' ' + lastPreposition + ' ' + typeRef.type + ' ' + typeRef.ref + '.';
-    // Meet the 255 character limit
-    if (changesetComment.length > 255)
-        changesetComment = 'Changed tags of ' + typeRef.type + ' ' + typeRef.ref + '.';
+    
+    // Menerjemahkan tipe objek OSM ke bahasa Indonesia
+    let indonesianType = typeRef.type;
+    if (typeRef.type === 'node') indonesianType = 'node';
+    if (typeRef.type === 'way') indonesianType = 'way';
+    if (typeRef.type === 'relation') indonesianType = 'relation';
+
+    changesetComment += ' ' + lastPreposition + ' ' + indonesianType + ' ' + typeRef.ref + '.';
+    
+    // Batasan 255 karakter dari API OSM
+    if (changesetComment.length > 255) {
+        changesetComment = 'Mengubah tag dari ' + indonesianType + ' ' + typeRef.ref + '.';
+    }
     
     // Prepare changeset payload.
     const changesetTags = {
@@ -357,7 +370,7 @@ function addTheButton() {
     let atag = document.createElement('a');
     atag.className = 'edit_tags_class';
     atag.href = '#';
-    atag.append('Edit Tags');
+    atag.append('Edit Tags');
     atag.addEventListener('click', function(e) {
         openEditor();
         e.preventDefault();
